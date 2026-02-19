@@ -1,0 +1,42 @@
+<div class="geovisor-layout">
+
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Cargando datos...</p>
+    </div>
+  }
+
+  <header class="topbar">
+    <div class="brand">
+      <h2>Censo Agropecuario</h2>
+<!--      <span class="badge">Geovisor Seguro</span>-->
+    </div>
+    <button (click)="cerrarSesion()" class="btn-logout">
+      Cerrar Sesión
+    </button>
+  </header>
+
+  <div class="main-content">
+
+    <aside class="sidebar">
+      <h3>Filtros</h3>
+
+      <div class="form-group">
+        <label for="depto">Departamento</label>
+        <select id="depto" class="form-control" (change)="cargarDatosPrueba()">
+          <option value="">Seleccione...</option>
+          <option value="1">La Paz</option>
+          <option value="2">Santa Cruz</option>
+          <option value="3">Cochabamba</option>
+        </select>
+      </div>
+
+    </aside>
+
+    <main class="map-wrapper">
+      <div id="mapa-censo"></div>
+    </main>
+
+  </div>
+</div>

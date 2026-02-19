@@ -1,0 +1,88 @@
+.contenedor-mapa {
+  display: flex;
+  position: relative;
+  height: 100vh;
+  width: 100%;
+}
+
+#mapa-censo-ejemplo {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
+.panel-filtros {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  min-width: 250px;
+
+  h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.1rem;
+    color: #333;
+    border-bottom: 2px solid #1976D2;
+    padding-bottom: 5px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .filtro-select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      outline: none;
+
+      &:focus {
+        border-color: #1976D2;
+      }
+    }
+  }
+}
+
+.loading-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  p {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #1976D2;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+  }
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #e0e0e0;
+  border-top: 5px solid #1976D2;
+  border-radius: 50%;
+  animation: girar 1s linear infinite;
+}
+
+@keyframes girar {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

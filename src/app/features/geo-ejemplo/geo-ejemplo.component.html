@@ -1,0 +1,48 @@
+<div class="contenedor-mapa">
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Consultando base de datos...</p>
+    </div>
+  }
+
+  <div class="panel-filtros">
+    <h3>Filtros Cartográficos</h3>
+
+    <div class="form-group">
+      <label>Departamento</label>
+      <select [(ngModel)]="departamentoSeleccionado" (change)="onDepartamentoChange()" class="filtro-select">
+        <option value="">Seleccione...</option>
+        @for (depto of departamentos(); track depto.id) {
+          <option [value]="depto.id">{{ depto.nombre }}</option>
+        }
+      </select>
+    </div>
+
+    @if (departamentoSeleccionado()) {
+      <div class="form-group">
+        <label>Municipio</label>
+        <select [(ngModel)]="municipioSeleccionado" (change)="onMunicipioChange()" class="filtro-select">
+          <option value="">Seleccione Municipio...</option>
+          @for (muni of municipios(); track muni.id) {
+            <option [value]="muni.id">{{ muni.nombre }}</option>
+          }
+        </select>
+      </div>
+    }
+
+    @if (municipioSeleccionado()) {
+      <div class="form-group">
+        <label>Comunidad</label>
+        <select [(ngModel)]="comunidadSeleccionada" (change)="onComunidadChange()" class="filtro-select">
+          <option value="">Seleccione Comunidad...</option>
+          @for (comu of comunidades(); track comu.id) {
+            <option [value]="comu.id">{{ comu.nombre }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  <div id="mapa-censo-ejemplo"></div>
+</div>
