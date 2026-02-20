@@ -2,11 +2,13 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import * as L from 'leaflet';
 import { GeovisorService } from '../../core/services/geovisor.service';
+import { AuthService } from '../../core/services/auth.service';
+import { NgOptimizedImage } from '@angular/common';
 
 @Component({
   selector: 'app-geo-ejemplo',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NgOptimizedImage],
   templateUrl: './geo-ejemplo.component.html',
   styleUrl: './geo-ejemplo.component.scss'
 })
@@ -18,6 +20,7 @@ export class GeoEjemploComponent implements OnInit {
   private capaComunidades: L.GeoJSON | null = null;
 
   isLoading = signal(false);
+  isSidebarOpen = signal(false); // Control del panel en móviles
 
   departamentos = signal<any[]>([]);
   municipios = signal<any[]>([]);
@@ -27,9 +30,23 @@ export class GeoEjemploComponent implements OnInit {
   municipioSeleccionado = signal<string>('');
   comunidadSeleccionada = signal<string>('');
 
+  private authService = inject(AuthService);
+  currentUser = signal<{username: string, role: string} | null>(null);
+
+  datosPanel = {
+    departamento: 'Potosí',
+    municipio: 'San Pedro',
+    comunidades: 276,
+    viviendasCPV: 586,
+    viviendasCNPV: '--',
+    upasCNA: 826,
+    productores: 879
+  };
+
   ngOnInit(): void {
     this.iniciarMapa();
     this.cargarListaDepartamentos();
+    this.cargarUsuario();
   }
 
   private iniciarMapa(): void {
@@ -106,6 +123,12 @@ export class GeoEjemploComponent implements OnInit {
           color: '#FFD600',
           fillOpacity: 0.8
         });
+
+        // Ocultar panel en móviles automáticamente al encontrar la comunidad
+        if (window.innerWidth <= 820) {
+          this.isSidebarOpen.set(false);
+        }
+
       } else {
         this.capaComunidades?.resetStyle(layer);
       }
@@ -170,5 +193,29 @@ export class GeoEjemploComponent implements OnInit {
   private limpiarCapas(): void {
     if (this.capaMunicipios) this.map.removeLayer(this.capaMunicipios);
     if (this.capaComunidades) this.map.removeLayer(this.capaComunidades);
+  }
+
+  cerrarSesion() {
+    this.authService.logout();
+  }
+
+  private cargarUsuario(): void {
+    const userStr = localStorage.getItem('user');
+    if (userStr) {
+      this.currentUser.set(JSON.parse(userStr));
+    }
+  }
+
+  resetMapa(): void {
+    this.departamentoSeleccionado.set('');
+    this.municipioSeleccionado.set('');
+    this.comunidadSeleccionada.set('');
+    this.limpiarCapas();
+
+    this.map.flyTo([-16.5, -64.15], 5, { duration: 1.5 });
+  }
+
+  toggleSidebar(): void {
+    this.isSidebarOpen.update(v => !v);
   }
 }
