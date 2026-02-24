@@ -1,42 +1,143 @@
 <div class="geovisor-layout">
-
-  @if (isLoading()) {
-    <div class="loading-overlay">
-      <div class="spinner"></div>
-      <p>Cargando datos...</p>
-    </div>
-  }
-
-  <header class="topbar">
+  <header class="navbar-ine">
     <div class="brand">
+      <i class="bi bi-list menu-icon-mobile" (click)="toggleSidebar()"></i>
+
+      <img
+        ngSrc="logo-ine.png"
+        alt="INE-90"
+        width="99" height="50" priority
+        class="logo-ine">
+      <div class="separator"></div>
       <h2>Censo Agropecuario</h2>
-<!--      <span class="badge">Geovisor Seguro</span>-->
     </div>
-    <button (click)="cerrarSesion()" class="btn-logout">
-      Cerrar Sesión
-    </button>
+
+    <div class="user-controls desktop-only">
+      <i class="bi bi-geo-alt-fill nav-icon" (click)="resetMapa()" title="Vista General"></i>
+      <div class="vertical-divider"></div>
+
+      @if (currentUser()) {
+        <div class="user-profile">
+          <span class="username">{{ currentUser()?.username }}</span>
+          <span class="role-badge">{{ currentUser()?.role }}</span>
+        </div>
+      }
+      <button class="btn-logout" (click)="cerrarSesion()">Cerrar Sesión</button>
+    </div>
   </header>
 
   <div class="main-content">
 
-    <aside class="sidebar">
-      <h3>Filtros</h3>
+    @if (isSidebarOpen()) {
+      <div class="sidebar-overlay" (click)="toggleSidebar()"></div>
+    }
 
-      <div class="form-group">
-        <label for="depto">Departamento</label>
-        <select id="depto" class="form-control" (change)="cargarDatosPrueba()">
-          <option value="">Seleccione...</option>
-          <option value="1">La Paz</option>
-          <option value="2">Santa Cruz</option>
-          <option value="3">Cochabamba</option>
-        </select>
+    <aside class="sidebar-filtros" [class.abierto]="isSidebarOpen()">
+
+      <div class="sidebar-header">
+        <h3>Filtros</h3>
       </div>
 
+      <div class="scrollable-content">
+
+        <div class="filter-group">
+          <label>Departamento</label>
+          <select [(ngModel)]="departamentoSeleccionado" (change)="onDepartamentoChange()" class="modern-select">
+            <option value="">Seleccione...</option>
+            @for (depto of departamentos(); track depto.id) {
+              <option [value]="depto.id">{{ depto.nombre }}</option>
+            }
+          </select>
+        </div>
+
+        @if (departamentoSeleccionado()) {
+          <div class="filter-group animated-fade">
+            <label>Municipio</label>
+            <select [(ngModel)]="municipioSeleccionado" (change)="onMunicipioChange()" class="modern-select">
+              <option value="">Seleccione Municipio...</option>
+              @for (muni of municipios(); track muni.id) {
+                <option [value]="muni.id">{{ muni.nombre }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (municipioSeleccionado()) {
+          <div class="filter-group animated-fade">
+            <label>Comunidad</label>
+            <select [(ngModel)]="comunidadSeleccionada" (change)="onComunidadChange()" class="modern-select">
+              <option value="">Seleccione Comunidad...</option>
+              @for (comu of comunidades(); track comu.id) {
+                <option [value]="comu.id">{{ comu.nombre }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (datosPanel(); as panel) {
+          <div class="info-panels animated-fade">
+
+            <div class="panel-box">
+              <div class="panel-header-gray">Ubicación geográfica</div>
+              <div class="panel-body-bordered">
+                <p>Departamento: {{ panel.departamento }}</p>
+                @if (panel.municipio) { <p>Municipio: {{ panel.municipio }}</p> }
+                @if (panel.comunidad) { <p>Comunidad: {{ panel.comunidad }}</p> }
+
+                @if (panel.nivelPanel !== 'comunidad') {
+                  <p>Nro. Comunidades/Haciendas: {{ panel.comunidades }}</p>
+                }
+              </div>
+            </div>
+
+            <div class="panel-box">
+              <div class="panel-header-gray">
+                Datos a nivel {{ panel.nivelPanel }}
+              </div>
+              <div class="panel-body-bordered">
+                <p>Total de viviendas CPV 2024: {{ panel.viviendasCPV }}</p>
+                <p>Total de viviendas CNPV 2012: {{ panel.viviendasCNPV }}</p>
+                <p>Total de UPA's CNA 2013: {{ panel.upasCNA }}</p>
+                <p>Total Productores (F1): {{ panel.productores }}</p>
+              </div>
+            </div>
+
+          </div>
+        }
+
+        <div class="bottom-actions">
+          <div class="referencias-box">
+            <div class="ref-header">Referencias</div>
+            <div class="ref-body">
+              <div class="ref-item"><span class="color-box border-purple"></span> Límite departamental</div>
+              <div class="ref-item"><span class="color-box border-dashed"></span> Límite municipal</div>
+              <div class="ref-item"><span class="color-box circle"></span> Comunidad/Hacienda</div>
+              <div class="ref-item"><span class="color-box icon-apa"></span> APA</div>
+            </div>
+          </div>
+
+          <button class="btn-excel" title="Descargar datos a nivel municipal en Excel">
+            Descargar
+          </button>
+        </div>
+
+      </div>
+
+      <div class="mobile-user-profile mobile-only">
+        @if (currentUser()) {
+          <div class="user-info">
+            <span class="username">{{ currentUser()?.username }}</span>
+            <span class="role-badge">{{ currentUser()?.role }}</span>
+          </div>
+        }
+        <button class="btn-logout-mobile" (click)="cerrarSesion()">
+          <i class="bi bi-box-arrow-right"></i> Salir
+        </button>
+      </div>
     </aside>
 
-    <main class="map-wrapper">
-      <div id="mapa-censo"></div>
+    <main class="map-viewport">
+      <div id="mapa-visor-censo"></div>
     </main>
-
   </div>
 </div>

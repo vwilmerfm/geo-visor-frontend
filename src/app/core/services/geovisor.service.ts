@@ -24,4 +24,12 @@ export class GeovisorService {
   getComunidades(municipioId: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/comunidades/${municipioId}`);
   }
+
+  getEstadisticas(nivel: string, id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/estadisticas?nivel=${nivel}&id=${id}`);
+  }
+
+  getApaComunidad(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/apa-comunidad/${id}`);
+  }
 }

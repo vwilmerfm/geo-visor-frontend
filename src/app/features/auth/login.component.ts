@@ -35,7 +35,7 @@ export class LoginComponent {
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
         this.isLoading.set(false);
-        this.router.navigate(['/geo-ejemplo']);
+        this.router.navigate(['/mapa']);
       },
       error: (err) => {
         this.isLoading.set(false);
