@@ -32,4 +32,10 @@ export class GeovisorService {
   getApaComunidad(id: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/apa-comunidad/${id}`);
   }
+
+  descargarExcel(nivel: string, id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/descargar-excel?nivel=${nivel}&id=${id}`, {
+      responseType: 'blob'
+    });
+  }
 }

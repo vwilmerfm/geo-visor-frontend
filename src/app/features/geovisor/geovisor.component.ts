@@ -3,12 +3,13 @@ import {FormsModule, ReactiveFormsModule} from '@angular/forms';
 import * as L from 'leaflet';
 import { GeovisorService } from '../../core/services/geovisor.service';
 import { AuthService } from '../../core/services/auth.service';
-import { NgOptimizedImage } from '@angular/common';
+import { NgOptimizedImage, DecimalPipe } from '@angular/common';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @Component({
   selector: 'app-geovisor',
   standalone: true,
-  imports: [FormsModule, NgOptimizedImage, ReactiveFormsModule],
+  imports: [FormsModule, NgOptimizedImage, ReactiveFormsModule, NgSelectModule, DecimalPipe],
   templateUrl: './geovisor.component.html',
   styleUrl: './geovisor.component.scss'
 })
@@ -23,14 +24,15 @@ export class GeovisorComponent implements OnInit {
 
   isLoading = signal(false);
   isSidebarOpen = signal(false);
+  isDownloading = signal(false);
 
   departamentos = signal<any[]>([]);
   municipios = signal<any[]>([]);
   comunidades = signal<any[]>([]);
 
-  departamentoSeleccionado = signal<string>('');
-  municipioSeleccionado = signal<string>('');
-  comunidadSeleccionada = signal<string>('');
+  departamentoSeleccionado = signal<any>(null);
+  municipioSeleccionado = signal<any>(null);
+  comunidadSeleccionada = signal<any>(null);
 
   private authService = inject(AuthService);
   currentUser = signal<{username: string, role: string} | null>(null);
@@ -43,14 +45,42 @@ export class GeovisorComponent implements OnInit {
     this.cargarUsuario();
   }
 
+  // private iniciarMapa(): void {
+  //   setTimeout(() => {
+  //     this.map = L.map('mapa-visor-censo').setView([-16.5, -68.15], 6);
+  //
+  //     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  //       maxZoom: 18,
+  //       attribution: '© OpenStreetMap - INE'
+  //     }).addTo(this.map);
+  //
+  //     this.map.invalidateSize();
+  //   }, 0);
+  // }
+
   private iniciarMapa(): void {
     setTimeout(() => {
-      this.map = L.map('mapa-visor-censo').setView([-16.5, -68.15], 6);
-
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      const calles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
-        attribution: '© OpenStreetMap - INE'
-      }).addTo(this.map);
+        attribution: '© OpenStreetMap INE'
+      });
+
+      const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 18,
+        attribution: '© Satelital INE'
+      });
+
+      this.map = L.map('mapa-visor-censo', {
+        center: [-16.5, -64.15],
+        zoom: 5,
+        layers: [calles]
+      });
+
+      const baseMaps = {
+        "Mapa de Calles": calles,
+        "Vista Satelital": satelite
+      };
+      L.control.layers(baseMaps).addTo(this.map);
 
       this.map.invalidateSize();
     }, 0);
@@ -62,7 +92,8 @@ export class GeovisorComponent implements OnInit {
         const deptos = data.features.map((f: any) => ({
           id: f.properties.id,
           nombre: f.properties.nombre
-        }));
+        })).sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
+
         this.departamentos.set(deptos);
         this.dibujarDepartamentos(data);
       }
@@ -86,7 +117,9 @@ export class GeovisorComponent implements OnInit {
     this.geoService.getMunicipios(+id).subscribe({
       next: (geoJsonData) => {
         this.isLoading.set(false);
-        this.municipios.set(geoJsonData.features.map((f: any) => f.properties));
+        const munis = geoJsonData.features.map((f: any) => f.properties)
+          .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
+        this.municipios.set(munis);
         this.dibujarMunicipios(geoJsonData);
 
         this.cargarEstadisticas('departamental', +id, { departamento: deptoObj.nombre });
@@ -107,7 +140,10 @@ export class GeovisorComponent implements OnInit {
     this.geoService.getComunidades(+id).subscribe({
       next: (geoJsonData) => {
         this.isLoading.set(false);
-        this.comunidades.set(geoJsonData.features.map((f: any) => f.properties));
+        const comus = geoJsonData.features.map((f: any) => f.properties)
+          .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
+
+        this.comunidades.set(comus);
         this.dibujarComunidades(geoJsonData);
 
         this.cargarEstadisticas('municipal', +id, {
@@ -225,8 +261,24 @@ export class GeovisorComponent implements OnInit {
       },
       onEachFeature: (feature, layer) => {
         layer.bindPopup(`<b>Municipio:</b> ${feature.properties.nombre}`);
-        layer.on('click', () => {
-          this.cargarComunidades(feature.properties.id);
+        layer.on({
+          mouseover: (e) => {
+            const polygon = e.target;
+            polygon.setStyle({
+              weight: 4,
+              color: '#88baec',
+              fillOpacity: 0.5
+            });
+            polygon.bringToFront();
+          },
+          mouseout: (e) => {
+            if (this.capaMunicipios) {
+              this.capaMunicipios.resetStyle(e.target);
+            }
+          },
+          click: () => {
+            this.cargarComunidades(feature.properties.id);
+          }
         });
       }
     }).addTo(this.map);
@@ -241,16 +293,12 @@ export class GeovisorComponent implements OnInit {
     this.geoService.getComunidades(municipioId).subscribe({
       next: (geoJsonData) => {
         this.isLoading.set(false);
-        if (this.capaComunidades) {
-          this.map.removeLayer(this.capaComunidades);
-        }
 
-        this.capaComunidades = L.geoJSON(geoJsonData, {
-          style: { color: '#4CAF50', weight: 2, fillColor: '#81C784', fillOpacity: 0.6 },
-          onEachFeature: (feature, layer) => {
-            layer.bindPopup(`<b>Comunidad:</b> ${feature.properties.nombre}`);
-          }
-        }).addTo(this.map);
+        const comus = geoJsonData.features.map((f: any) => f.properties)
+          .sort((a: any, b: any) => a.nombre.localeCompare(b.nombre));
+        this.comunidades.set(comus);
+
+        this.dibujarComunidades(geoJsonData);
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -263,17 +311,18 @@ export class GeovisorComponent implements OnInit {
     if (this.capaComunidades) this.map.removeLayer(this.capaComunidades);
 
     this.capaComunidades = L.geoJSON(geoJsonData, {
+      style: { color: '#4CAF50', weight: 2, fillColor: '#81C784', fillOpacity: 0.6 },
+
       pointToLayer: (feature, latlng) => {
         return L.circleMarker(latlng, {
           radius: 6,
-          fillColor: '#ffffff',
-          color: '#333333',
+          color: '#4CAF50',
           weight: 2,
-          fillOpacity: 1
+          fillColor: '#81C784',
+          fillOpacity: 0.8
         });
       },
 
-      style: { color: '#4CAF50', weight: 2, fillColor: '#81C784', fillOpacity: 0.6 },
       onEachFeature: (feature, layer) => {
         layer.bindPopup(`<b>Comunidad:</b> ${feature.properties.nombre}`);
       }
@@ -302,9 +351,9 @@ export class GeovisorComponent implements OnInit {
   }
 
   resetMapa(): void {
-    this.departamentoSeleccionado.set('');
-    this.municipioSeleccionado.set('');
-    this.comunidadSeleccionada.set('');
+    this.departamentoSeleccionado.set(null);
+    this.municipioSeleccionado.set(null);
+    this.comunidadSeleccionada.set(null);
     this.limpiarCapas();
 
     if (this.capaDepartamentos) {
@@ -330,6 +379,37 @@ export class GeovisorComponent implements OnInit {
         });
       },
       error: (err) => console.error('Error al cargar las estadisticas', err)
+    });
+  }
+
+  descargarReporte(): void {
+    const panel = this.datosPanel();
+    if (!panel) return;
+
+    this.isDownloading.set(true);
+
+    let id = 0;
+    if (panel.nivelPanel === 'departamental') id = +this.departamentoSeleccionado();
+    else if (panel.nivelPanel === 'municipal') id = +this.municipioSeleccionado();
+    else if (panel.nivelPanel === 'comunidad') id = +this.comunidadSeleccionada();
+
+    this.geoService.descargarExcel(panel.nivelPanel, id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Reporte_${panel.nivelPanel}_${id}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        this.isDownloading.set(false);
+      },
+      error: (err) => {
+        console.error('Error al descargar el archivo', err);
+        this.isDownloading.set(false);
+      }
     });
   }
 }

@@ -42,35 +42,44 @@
 
         <div class="filter-group">
           <label>Departamento</label>
-          <select [(ngModel)]="departamentoSeleccionado" (change)="onDepartamentoChange()" class="modern-select">
-            <option value="">Seleccione...</option>
-            @for (depto of departamentos(); track depto.id) {
-              <option [value]="depto.id">{{ depto.nombre }}</option>
-            }
-          </select>
+          <ng-select
+            [items]="departamentos()"
+            bindLabel="nombre"
+            bindValue="id"
+            placeholder="Buscar departamento..."
+            [ngModel]="departamentoSeleccionado()"
+            (ngModelChange)="departamentoSeleccionado.set($event); onDepartamentoChange()"
+            class="custom-ng-select">
+          </ng-select>
         </div>
 
         @if (departamentoSeleccionado()) {
           <div class="filter-group animated-fade">
             <label>Municipio</label>
-            <select [(ngModel)]="municipioSeleccionado" (change)="onMunicipioChange()" class="modern-select">
-              <option value="">Seleccione Municipio...</option>
-              @for (muni of municipios(); track muni.id) {
-                <option [value]="muni.id">{{ muni.nombre }}</option>
-              }
-            </select>
+            <ng-select
+              [items]="municipios()"
+              bindLabel="nombre"
+              bindValue="id"
+              placeholder="Buscar municipio..."
+              [ngModel]="municipioSeleccionado()"
+              (ngModelChange)="municipioSeleccionado.set($event); onMunicipioChange()"
+              class="custom-ng-select">
+            </ng-select>
           </div>
         }
 
         @if (municipioSeleccionado()) {
           <div class="filter-group animated-fade">
             <label>Comunidad</label>
-            <select [(ngModel)]="comunidadSeleccionada" (change)="onComunidadChange()" class="modern-select">
-              <option value="">Seleccione Comunidad...</option>
-              @for (comu of comunidades(); track comu.id) {
-                <option [value]="comu.id">{{ comu.nombre }}</option>
-              }
-            </select>
+            <ng-select
+              [items]="comunidades()"
+              bindLabel="nombre"
+              bindValue="id"
+              placeholder="Buscar comunidad..."
+              [ngModel]="comunidadSeleccionada()"
+              (ngModelChange)="comunidadSeleccionada.set($event); onComunidadChange()"
+              class="custom-ng-select">
+            </ng-select>
           </div>
         }
 
@@ -80,12 +89,12 @@
             <div class="panel-box">
               <div class="panel-header-gray">Ubicación geográfica</div>
               <div class="panel-body-bordered">
-                <p>Departamento: {{ panel.departamento }}</p>
-                @if (panel.municipio) { <p>Municipio: {{ panel.municipio }}</p> }
-                @if (panel.comunidad) { <p>Comunidad: {{ panel.comunidad }}</p> }
+                <p><strong>Departamento:</strong> {{ panel.departamento }}</p>
+                @if (panel.municipio) { <p><strong>Municipio:</strong> {{ panel.municipio }}</p> }
+                @if (panel.comunidad) { <p><strong>Comunidad:</strong> {{ panel.comunidad }}</p> }
 
                 @if (panel.nivelPanel !== 'comunidad') {
-                  <p>Nro. Comunidades/Haciendas: {{ panel.comunidades }}</p>
+                  <p><strong>Nro. Comunidades/Haciendas:</strong> {{ panel.comunidades | number }}</p>
                 }
               </div>
             </div>
@@ -95,31 +104,35 @@
                 Datos a nivel {{ panel.nivelPanel }}
               </div>
               <div class="panel-body-bordered">
-                <p>Total de viviendas CPV 2024: {{ panel.viviendasCPV }}</p>
-                <p>Total de viviendas CNPV 2012: {{ panel.viviendasCNPV }}</p>
-                <p>Total de UPA's CNA 2013: {{ panel.upasCNA }}</p>
-                <p>Total Productores (F1): {{ panel.productores }}</p>
+                <p><strong>Tot. Viviendas CPV 2024:</strong> {{ panel.viviendasCPV | number }}</p>
+                <p><strong>Tot. Viviendas CNPV 2012:</strong> {{ panel.viviendasCNPV | number }}</p>
+                <p><strong>Tot. UPA's CNA 2013:</strong> {{ panel.upasCNA | number }}</p>
+                <p><strong>Tot. Productores (F1):</strong> {{ panel.productores | number }}</p>
               </div>
             </div>
 
           </div>
         }
 
-        <div class="bottom-actions">
-          <div class="referencias-box">
-            <div class="ref-header">Referencias</div>
-            <div class="ref-body">
-              <div class="ref-item"><span class="color-box border-purple"></span> Límite departamental</div>
-              <div class="ref-item"><span class="color-box border-dashed"></span> Límite municipal</div>
-              <div class="ref-item"><span class="color-box circle"></span> Comunidad/Hacienda</div>
-              <div class="ref-item"><span class="color-box icon-apa"></span> APA</div>
-            </div>
+        <div class="panel-box mt-3">
+          <div class="panel-header-gray">Referencias</div>
+          <div class="panel-body-bordered ref-body-grid">
+            <div class="ref-item"><span class="color-box border-purple"></span> Límite departamental</div>
+            <div class="ref-item"><span class="color-box border-dashed"></span> Límite municipal</div>
+            <div class="ref-item"><span class="color-box circle"></span> Comunidad/Hacienda</div>
+            <div class="ref-item"><span class="color-box icon-apa"></span> APA</div>
           </div>
-
-          <button class="btn-excel" title="Descargar datos a nivel municipal en Excel">
-            Descargar
-          </button>
         </div>
+
+        @if (datosPanel()) {
+          <button class="btn-excel-block" (click)="descargarReporte()" [disabled]="isDownloading()">
+            @if (isDownloading()) {
+              <span class="spinner-small"></span> Descargando...
+            } @else {
+              <i class="bi bi-file-earmark-excel-fill"></i> Descargar Datos (Excel)
+            }
+          </button>
+        }
 
       </div>
 
@@ -137,6 +150,12 @@
     </aside>
 
     <main class="map-viewport">
+      @if (isLoading()) {
+        <div class="map-loader">
+          <div class="spinner"></div>
+          <p>Cargando cartografía...</p>
+        </div>
+      }
       <div id="mapa-visor-censo"></div>
     </main>
   </div>
