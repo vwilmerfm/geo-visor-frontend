@@ -35,7 +35,7 @@
     <aside class="sidebar-filtros" [class.abierto]="isSidebarOpen()">
 
       <div class="sidebar-header">
-        <h3>Filtros</h3>
+        <h3>Filtros por:</h3>
       </div>
 
       <div class="scrollable-content">
@@ -46,9 +46,10 @@
             [items]="departamentos()"
             bindLabel="nombre"
             bindValue="id"
-            placeholder="Buscar departamento..."
+            placeholder="Buscar departamento.."
             [ngModel]="departamentoSeleccionado()"
             (ngModelChange)="departamentoSeleccionado.set($event); onDepartamentoChange()"
+            [readonly]="isLoading()"
             class="custom-ng-select">
           </ng-select>
         </div>
@@ -60,9 +61,10 @@
               [items]="municipios()"
               bindLabel="nombre"
               bindValue="id"
-              placeholder="Buscar municipio..."
+              placeholder="Buscar municipio.."
               [ngModel]="municipioSeleccionado()"
               (ngModelChange)="municipioSeleccionado.set($event); onMunicipioChange()"
+              [readonly]="isLoading()"
               class="custom-ng-select">
             </ng-select>
           </div>
@@ -75,12 +77,23 @@
               [items]="comunidades()"
               bindLabel="nombre"
               bindValue="id"
-              placeholder="Buscar comunidad..."
+              placeholder="Buscar comunidad.."
               [ngModel]="comunidadSeleccionada()"
               (ngModelChange)="comunidadSeleccionada.set($event); onComunidadChange()"
+              [readonly]="isLoading()"
               class="custom-ng-select">
             </ng-select>
           </div>
+
+          <!-- POR SI ACASO
+          <div class="toggle-container animated-fade">
+            <label class="toggle-switch">
+              <input type="checkbox" [ngModel]="verComunidades()" (ngModelChange)="toggleComunidades($event)">
+              <span class="slider round"></span>
+            </label>
+            <span class="toggle-label">Mostrar comunidades</span>
+          </div>
+          -->
         }
 
         @if (datosPanel(); as panel) {
