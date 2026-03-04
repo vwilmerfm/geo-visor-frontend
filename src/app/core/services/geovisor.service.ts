@@ -38,4 +38,12 @@ export class GeovisorService {
       responseType: 'blob'
     });
   }
+
+  getSectores(comunidadId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/sectores/${comunidadId}`);
+  }
+
+  getSectoresPorMunicipio(municipioId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/sectores-municipio/${municipioId}`);
+  }
 }

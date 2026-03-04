@@ -117,6 +117,11 @@
                 Datos a nivel {{ panel.nivelPanel }}
               </div>
               <div class="panel-body-bordered">
+                @if (panel.nivelPanel === 'comunidad') {
+                  <p style="color: #1976D2; font-size: 0.95rem; margin-bottom: 8px; border-bottom: 1px dashed #ccc; padding-bottom: 5px;">
+                    <strong><i class="bi bi-geo-alt-fill"></i> {{ panel.comunidad }}</strong>
+                  </p>
+                }
                 <p><strong>Tot. Viviendas CPV 2024:</strong> {{ panel.viviendasCPV | number }}</p>
                 <p><strong>Tot. Viviendas CNPV 2012:</strong> {{ panel.viviendasCNPV | number }}</p>
                 <p><strong>Tot. UPA's CNA 2013:</strong> {{ panel.upasCNA | number }}</p>
@@ -134,6 +139,7 @@
             <div class="ref-item"><span class="color-box border-dashed"></span> Límite municipal</div>
             <div class="ref-item"><span class="color-box circle"></span> Comunidad/Hacienda</div>
             <div class="ref-item"><span class="color-box icon-apa"></span> APA</div>
+            <div class="ref-item"><span class="color-box border-blue"></span> Sector</div>
           </div>
         </div>
 

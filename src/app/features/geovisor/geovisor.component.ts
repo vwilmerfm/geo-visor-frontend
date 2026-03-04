@@ -22,6 +22,8 @@ export class GeovisorComponent implements OnInit {
   private capaComunidades: L.GeoJSON | null = null;
   private capaPoligonosComunidad: L.GeoJSON | null = null;
   private capaApa: L.GeoJSON | null = null;
+  private capaSectores: L.GeoJSON | null = null;
+
   private layerControl: L.Control.Layers | null = null;
 
   isLoading = signal(false);
@@ -85,6 +87,9 @@ export class GeovisorComponent implements OnInit {
       this.map.createPane('fronterasComunidadPane');
       this.map.getPane('fronterasComunidadPane')!.style.zIndex = '450';
 
+      this.map.createPane('sectoresPane');
+      this.map.getPane('sectoresPane')!.style.zIndex = '460';
+
       const baseMaps = {
         "Mapa de Calles": calles,
         // "Vista Satelital": satelite
@@ -102,6 +107,23 @@ export class GeovisorComponent implements OnInit {
             const tooltip = layer.getTooltip();
             if (tooltip) {
               if (mostrarNombresFijos) {
+                tooltip.options.permanent = true;
+                layer.openTooltip();
+              } else {
+                tooltip.options.permanent = false;
+                layer.closeTooltip();
+              }
+            }
+          });
+        }
+
+        const mostrarSectoresFijos = nivelZoom >= 14;
+
+        if (this.capaSectores) {
+          this.capaSectores.eachLayer((layer: any) => {
+            const tooltip = layer.getTooltip();
+            if (tooltip) {
+              if (mostrarSectoresFijos) {
                 tooltip.options.permanent = true;
                 layer.openTooltip();
               } else {
@@ -251,6 +273,11 @@ export class GeovisorComponent implements OnInit {
         this.map.removeLayer(this.capaPoligonosComunidad);
       }
 
+      if (this.capaSectores) {
+        if (this.layerControl) this.layerControl.removeLayer(this.capaSectores);
+        this.map.removeLayer(this.capaSectores);
+      }
+
       this.comunidades.set([]);
 
       const deptoObj = this.departamentos().find(d => d.id === +this.departamentoSeleccionado());
@@ -265,6 +292,7 @@ export class GeovisorComponent implements OnInit {
     const muniObj = this.municipios().find(m => m.id === +id);
 
     this.isLoading.set(true);
+
     this.geoService.getComunidades(+id).subscribe({
       next: (geoJsonData) => {
         this.isLoading.set(false);
@@ -278,6 +306,16 @@ export class GeovisorComponent implements OnInit {
         this.cargarEstadisticas('municipal', +id, {
           departamento: deptoObj?.nombre,
           municipio: muniObj?.nombre
+        });
+
+        if (this.capaSectores) {
+          if (this.layerControl) this.layerControl.removeLayer(this.capaSectores);
+          this.map.removeLayer(this.capaSectores);
+        }
+
+        this.geoService.getSectoresPorMunicipio(+id).subscribe({
+          next: (dataSectores) => this.dibujarSectores(dataSectores, false),
+          error: (err) => console.error(err)
         });
       },
       error: (err) => {
@@ -323,8 +361,8 @@ export class GeovisorComponent implements OnInit {
         if (layer.setStyle) {
           layer.setStyle({
             radius: 9,
-            color: '#b71c1c',
-            fillColor: '#FFD600',
+            color: '#1B5E20',
+            fillColor: '#00E676',
             weight: 3,
             fillOpacity: 1
           });
@@ -376,10 +414,22 @@ export class GeovisorComponent implements OnInit {
         this.capaApa.bringToBack();
 
         if (this.layerControl) {
-          this.layerControl.addOverlay(this.capaApa, "🟫 Region APA");
+          this.layerControl.addOverlay(this.capaApa, "🟫 Region Comunidad");
         }
       },
       error: (err) => console.error('Error cargando el poligono APA:', err)
+    });
+
+    if (this.capaSectores) {
+      if (this.layerControl) this.layerControl.removeLayer(this.capaSectores);
+      this.map.removeLayer(this.capaSectores);
+    }
+
+    this.geoService.getSectores(+id).subscribe({
+      next: (geoJsonData) => {
+        this.dibujarSectores(geoJsonData, true);
+      },
+      error: (err) => console.error('Error cargando los sectores:', err)
     });
   }
 
@@ -553,13 +603,59 @@ export class GeovisorComponent implements OnInit {
     }).addTo(this.map);
 
     if (this.layerControl) {
-      this.layerControl.addOverlay(this.capaPoligonosComunidad, "🔲 Polígonos de Comunidad");
-      this.layerControl.addOverlay(this.capaComunidades, "🟢 Puntos de Comunidad");
+      this.layerControl.addOverlay(this.capaPoligonosComunidad, "🔲 APA's");
+      this.layerControl.addOverlay(this.capaComunidades, "🟢 Comunidad/Hacienda");
     }
 
     if (geoJsonData.features?.length > 0) {
       this.map.flyToBounds(this.capaComunidades.getBounds(), { padding: [30, 30] });
     }
+  }
+
+  private dibujarSectores(geoJsonData: any, mostrarNumerosFijos: boolean = true): void {
+    const zoomInicial = this.map.getZoom();
+
+    this.capaSectores = L.geoJSON(geoJsonData, {
+      pane: 'sectoresPane',
+      style: {
+        color: '#1976D2',
+        weight: 2.5,
+        fillColor: 'transparent',
+        fillOpacity: 0,
+        dashArray: ''
+      },
+      onEachFeature: (feature, layer) => {
+        layer.bindPopup(`<div style="text-align: center;">
+                           <b>Sector CA:</b><br>
+                           <span style="font-size: 1.2em; color: #0D47A1; font-weight: bold;">
+                             ${feature.properties.sector_ca}
+                           </span>
+                         </div>`);
+
+        layer.bindTooltip(feature.properties.sector_ca, {
+          permanent: zoomInicial >= 14,
+          direction: 'center',
+          className: 'sector-label'
+        });
+
+        layer.on({
+          mouseover: (e) => e.target.setStyle({
+            fillColor: '#1976D2',
+            fillOpacity: 0.15,
+            weight: 3 }),
+          mouseout: (e) => {
+            if (this.capaSectores)
+              this.capaSectores.resetStyle(e.target);
+          }
+        });
+      }
+    }).addTo(this.map);
+
+    if (this.layerControl)
+      this.layerControl.addOverlay(this.capaSectores, "🟦 Sectores");
+
+    if (geoJsonData.features?.length > 0)
+      this.capaSectores.bringToFront();
   }
 
   private limpiarCapas(): void {
@@ -569,13 +665,20 @@ export class GeovisorComponent implements OnInit {
       if (this.layerControl) this.layerControl.removeLayer(this.capaComunidades);
       this.map.removeLayer(this.capaComunidades);
     }
+
     if (this.capaApa) {
       if (this.layerControl) this.layerControl.removeLayer(this.capaApa);
       this.map.removeLayer(this.capaApa);
     }
+
     if (this.capaPoligonosComunidad) {
       if (this.layerControl) this.layerControl.removeLayer(this.capaPoligonosComunidad);
       this.map.removeLayer(this.capaPoligonosComunidad);
+    }
+
+    if (this.capaSectores) {
+      if (this.layerControl) this.layerControl.removeLayer(this.capaSectores);
+      this.map.removeLayer(this.capaSectores);
     }
   }
 

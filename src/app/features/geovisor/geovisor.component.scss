@@ -388,6 +388,7 @@
       &.border-dashed { border: 2px dashed #666; height: 12px;}
       &.circle { border: 2px solid #4caf50; border-radius: 50%; width: 14px; height: 14px; background-color: #4caf50;}
       &.icon-apa { background-color: #8c5b55; height: 12px; border: 1px solid #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.3);}
+      &.border-blue { border: 2.5px solid #1976D2; height: 12px; background-color: transparent;}
     }
   }
 }
@@ -564,5 +565,23 @@
 }
 
 ::ng-deep .leaflet-tooltip.label-halo.leaflet-tooltip-permanent::before {
+  display: none !important;
+}
+
+::ng-deep .leaflet-tooltip.sector-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #1976D2 !important;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-shadow:
+    -1px -1px 0 #fff,
+    1px -1px 0 #fff,
+    -1px  1px 0 #fff,
+    1px  1px 0 #fff;
+}
+
+::ng-deep .leaflet-tooltip.sector-label::before {
   display: none !important;
 }
