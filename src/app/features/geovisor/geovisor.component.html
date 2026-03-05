@@ -138,11 +138,19 @@
             <div class="ref-item"><span class="color-box border-purple"></span> Límite departamental</div>
             <div class="ref-item"><span class="color-box border-dashed"></span> Límite municipal</div>
             <div class="ref-item"><span class="color-box circle"></span> Comunidad/Hacienda</div>
-            <div class="ref-item"><span class="color-box icon-apa"></span> APA</div>
-            <div class="ref-item"><span class="color-box border-blue"></span> Sector</div>
+            <div class="ref-item"><span class="color-box icon-apa"></span> APA's</div>
+            <div class="ref-item"><span class="color-box border-green"></span> Área Censal</div>
+            <div class="ref-item"><span class="color-box border-blue"></span> Sectores</div>
+            <div class="ref-item"><span class="color-box dot-red"></span> UPA's - Amanzanado</div>
+            <div class="ref-item"><span class="color-box poly-gray"></span> Manzanos</div>
+            <div class="ref-item"><span class="color-box dot-black"></span> Predios</div>
+            <!--
+            <div class="ref-item"><span class="color-box border-red"></span> Periurbano</div>
+            -->
           </div>
         </div>
 
+        <!--
         @if (datosPanel()) {
           <button class="btn-excel-block" (click)="descargarReporte()" [disabled]="isDownloading()">
             @if (isDownloading()) {
@@ -151,6 +159,29 @@
               <i class="bi bi-file-earmark-excel-fill"></i> Descargar Datos (Excel)
             }
           </button>
+
+          @if (datosPanel().nivelPanel === 'municipal') {
+            <button class="btn-excel-block btn-excel-sectores" (click)="descargarReporteSectoresMunicipal()" [disabled]="isDownloadingSectores()">
+              @if (isDownloadingSectores()) {
+                <span class="spinner-small"></span> Descargando Sectores...
+              } @else {
+                <i class="bi bi-file-earmark-spreadsheet-fill"></i> Descargar Sectores (Excel)
+              }
+            </button>
+          }
+        }
+        -->
+        @if (datosPanel()) {
+
+          @if (datosPanel().nivelPanel === 'municipal') {
+            <button class="btn-excel-block btn-excel-sectores" (click)="descargarReporteSectoresMunicipal()" [disabled]="isDownloadingSectores()">
+              @if (isDownloadingSectores()) {
+                <span class="spinner-small"></span> Descargando Datos...
+              } @else {
+                <i class="bi bi-file-earmark-spreadsheet-fill"></i> Descargar Datos (Excel)
+              }
+            </button>
+          }
         }
 
       </div>

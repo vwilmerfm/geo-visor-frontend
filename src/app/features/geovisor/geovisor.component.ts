@@ -23,12 +23,18 @@ export class GeovisorComponent implements OnInit {
   private capaPoligonosComunidad: L.GeoJSON | null = null;
   private capaApa: L.GeoJSON | null = null;
   private capaSectores: L.GeoJSON | null = null;
+  private capaPredios: L.GeoJSON | null = null;
+  private capaManzanos: L.GeoJSON | null = null;
+  private capaPeriurbano: L.GeoJSON | null = null;
+  private capaUpas: L.GeoJSON | null = null;
+  private capaAreaCensal: L.GeoJSON | null = null;
 
   private layerControl: L.Control.Layers | null = null;
 
   isLoading = signal(false);
   isSidebarOpen = signal(false);
   isDownloading = signal(false);
+  isDownloadingSectores = signal(false);
 
   departamentos = signal<any[]>([]);
   municipios = signal<any[]>([]);
@@ -42,6 +48,7 @@ export class GeovisorComponent implements OnInit {
   currentUser = signal<{username: string, role: string} | null>(null);
 
   datosPanel = signal<any>(null);
+
   // POR SI ACASO
   // verComunidades = signal<boolean>(true);
 
@@ -64,6 +71,7 @@ export class GeovisorComponent implements OnInit {
     }
    ================================= */
 
+
   private iniciarMapa(): void {
     setTimeout(() => {
       const calles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -71,12 +79,10 @@ export class GeovisorComponent implements OnInit {
         attribution: '© OSM Instituto Nacional de Estadística'
       });
 
-      /* ======= VISTA SATELITAL =======
-            const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-              maxZoom: 18,
-              attribution: '© OSM Instituto Nacional de Estadística'
-            });
-      =================================== */
+      const satelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 18,
+        attribution: '© OSM Instituto Nacional de Estadística'
+      });
 
       this.map = L.map('mapa-visor-censo', {
         center: [-16.5, -64.15],
@@ -90,12 +96,38 @@ export class GeovisorComponent implements OnInit {
       this.map.createPane('sectoresPane');
       this.map.getPane('sectoresPane')!.style.zIndex = '460';
 
+      this.map.createPane('areaCensalPane'); this.map.getPane('areaCensalPane')!.style.zIndex = '410';
+      this.map.createPane('periurbanoPane'); this.map.getPane('periurbanoPane')!.style.zIndex = '420';
+      this.map.createPane('manzanosPane');   this.map.getPane('manzanosPane')!.style.zIndex = '430';
+
       const baseMaps = {
         "Mapa de Calles": calles,
-        // "Vista Satelital": satelite
+        "Vista Satelital": satelite
       };
 
-      this.layerControl = L.control.layers(baseMaps).addTo(this.map);
+      const ordenCapas = [
+        "Comunidad",
+        "APA",
+        "Área Censal",
+        "Sectores",
+        "UPA",
+        "Manzanos",
+        "Predios",
+        "Periurbano"
+      ];
+
+      this.layerControl = L.control.layers(baseMaps, undefined, {
+        sortLayers: true,
+        sortFunction: (layerA, layerB, nameA, nameB) => {
+          let idxA = ordenCapas.findIndex(palabra => nameA.includes(palabra));
+          let idxB = ordenCapas.findIndex(palabra => nameB.includes(palabra));
+
+          if (idxA === -1) idxA = 99;
+          if (idxB === -1) idxB = 99;
+
+          return idxA - idxB;
+        }
+      }).addTo(this.map);
 
       this.map.on('zoomend', () => {
         const nivelZoom = this.map.getZoom();
@@ -281,10 +313,21 @@ export class GeovisorComponent implements OnInit {
       this.comunidades.set([]);
 
       const deptoObj = this.departamentos().find(d => d.id === +this.departamentoSeleccionado());
+
       if (deptoObj) {
         this.cargarEstadisticas('departamental', +this.departamentoSeleccionado(), { departamento: deptoObj.nombre });
         if (this.capaMunicipios) this.map.flyToBounds(this.capaMunicipios.getBounds(), { padding: [30, 30] });
       }
+
+      const capas = [this.capaPredios, this.capaManzanos, this.capaPeriurbano, this.capaUpas, this.capaAreaCensal];
+
+      capas.forEach(capa => {
+        if (capa) {
+          if (this.layerControl) this.layerControl.removeLayer(capa);
+          this.map.removeLayer(capa);
+        }
+      });
+
       return;
     }
 
@@ -317,6 +360,12 @@ export class GeovisorComponent implements OnInit {
           next: (dataSectores) => this.dibujarSectores(dataSectores, false),
           error: (err) => console.error(err)
         });
+
+        this.geoService.getPrediosMunicipio(+id).subscribe({ next: (d) => this.dibujarPredios(d) });
+        this.geoService.getManzanosMunicipio(+id).subscribe({ next: (d) => this.dibujarManzanos(d) });
+        // this.geoService.getPeriurbanoMunicipio(+id).subscribe({ next: (d) => this.dibujarPeriurbano(d) });
+        this.geoService.getUpasMunicipio(+id).subscribe({ next: (d) => this.dibujarUpas(d) });
+        this.geoService.getAreaCensalMunicipio(+id).subscribe({ next: (d) => this.dibujarAreaCensal(d) });
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -329,12 +378,12 @@ export class GeovisorComponent implements OnInit {
     const id = this.comunidadSeleccionada();
     if (!id || !this.capaComunidades) return;
 
-    /* ======= SWITCH =======
+    /* ======= SW =======
     if (!this.verComunidades()) {
       this.verComunidades.set(true);
       this.map.addLayer(this.capaComunidades);
     }
-    ========================== */
+    ====================== */
 
     const deptoObj = this.departamentos().find(d => d.id === +this.departamentoSeleccionado());
     const muniObj = this.municipios().find(m => m.id === +this.municipioSeleccionado());
@@ -680,6 +729,14 @@ export class GeovisorComponent implements OnInit {
       if (this.layerControl) this.layerControl.removeLayer(this.capaSectores);
       this.map.removeLayer(this.capaSectores);
     }
+
+    const capas = [this.capaPredios, this.capaManzanos, this.capaPeriurbano, this.capaUpas, this.capaAreaCensal];
+    capas.forEach(capa => {
+      if (capa) {
+        if (this.layerControl) this.layerControl.removeLayer(capa);
+        this.map.removeLayer(capa);
+      }
+    });
   }
 
   cerrarSesion() {
@@ -752,6 +809,84 @@ export class GeovisorComponent implements OnInit {
       error: (err) => {
         console.error('Error al descargar el archivo', err);
         this.isDownloading.set(false);
+      }
+    });
+  }
+
+  private dibujarPredios(geoJsonData: any): void {
+    this.capaPredios = L.geoJSON(geoJsonData, {
+      pane: 'markerPane', filter: (f) => f.geometry.type === 'Point',
+      pointToLayer: (feature, latlng) => L.circleMarker(latlng, { radius: 2.5, color: '#212121', fillColor: '#212121', fillOpacity: 1 })
+    });
+    if (this.layerControl) this.layerControl.addOverlay(this.capaPredios, "⚫ Predios");
+  }
+
+  private dibujarManzanos(geoJsonData: any): void {
+    this.capaManzanos = L.geoJSON(geoJsonData, {
+      pane: 'manzanosPane',
+      style: { color: '#ffffff', weight: 1.5, fillColor: '#9e9e9e', fillOpacity: 0.9, dashArray: '' }
+    });
+    if (this.layerControl) this.layerControl.addOverlay(this.capaManzanos, "⬜ Manzanos");
+  }
+
+  /* ======= CAPA PREDIOS =======
+  private dibujarPeriurbano(geoJsonData: any): void {
+    this.capaPeriurbano = L.geoJSON(geoJsonData, {
+      pane: 'periurbanoPane',
+      style: { color: '#d32f2f', weight: 2.5, fillColor: 'transparent', fillOpacity: 0, dashArray: '' },
+      onEachFeature: (feature, layer) => {
+        if (feature.properties.clas) {
+          layer.bindTooltip(feature.properties.clas, { permanent: true, direction: 'center', className: 'label-periurbano' });
+        }
+      }
+    });
+    if (this.layerControl) this.layerControl.addOverlay(this.capaPeriurbano, "🟥 Periurbano");
+  }
+  ================================ */
+
+  private dibujarUpas(geoJsonData: any): void {
+    this.capaUpas = L.geoJSON(geoJsonData, {
+      pane: 'markerPane', filter: (f) => f.geometry.type === 'Point',
+      pointToLayer: (feature, latlng) => L.circleMarker(latlng, { radius: 3.5, color: '#b71c1c', fillColor: '#d32f2f', fillOpacity: 1, weight: 1.5 })
+    });
+    if (this.layerControl) this.layerControl.addOverlay(this.capaUpas, "🔴 UPA's - Amanzanado");
+  }
+
+  private dibujarAreaCensal(geoJsonData: any): void {
+    this.capaAreaCensal = L.geoJSON(geoJsonData, {
+      pane: 'areaCensalPane',
+      style: { color: '#388e3c', weight: 2.5, fillColor: 'transparent', fillOpacity: 0, dashArray: '' },
+      onEachFeature: (feature, layer) => {
+        if (feature.properties.areacensal_ca) {
+          layer.bindTooltip(feature.properties.areacensal_ca, { permanent: true, direction: 'center', className: 'label-areacensal' });
+        }
+      }
+    });
+    if (this.layerControl) this.layerControl.addOverlay(this.capaAreaCensal, "🟩 Área Censal");
+  }
+
+  descargarReporteSectoresMunicipal(): void {
+    const id = this.municipioSeleccionado();
+    if (!id) return;
+
+    this.isDownloadingSectores.set(true);
+
+    this.geoService.descargarExcelSectoresMunicipal(+id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Reporte_Municipio_${id}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        this.isDownloadingSectores.set(false);
+      },
+      error: (err) => {
+        console.error('Error al descargar el archivo', err);
+        this.isDownloadingSectores.set(false);
       }
     });
   }

@@ -46,4 +46,30 @@ export class GeovisorService {
   getSectoresPorMunicipio(municipioId: number): Observable<any> {
     return this.http.get(`${this.apiUrl}/sectores-municipio/${municipioId}`);
   }
+
+  getPrediosMunicipio(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/predios-municipio/${id}`);
+  }
+
+  getManzanosMunicipio(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/manzanos-municipio/${id}`);
+  }
+
+  getPeriurbanoMunicipio(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/periurbano-municipio/${id}`);
+  }
+
+  getUpasMunicipio(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/upas-municipio/${id}`);
+  }
+
+  getAreaCensalMunicipio(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/areacensal-municipio/${id}`);
+  }
+
+  descargarExcelSectoresMunicipal(municipioId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/descargar-excel-sectores-municipal/${municipioId}`, {
+      responseType: 'blob'
+    });
+  }
 }
