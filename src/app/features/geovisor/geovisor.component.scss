@@ -615,3 +615,18 @@
   text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff;
 }
 ::ng-deep .leaflet-tooltip.label-areacensal::before { display: none !important; }
+
+::ng-deep .leaflet-tooltip.label-manzano {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #000000 !important;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-shadow:
+    -1.5px -1.5px 0 #fff,
+    1.5px -1.5px 0 #fff,
+    -1.5px  1.5px 0 #fff,
+    1.5px  1.5px 0 #fff;
+}
+::ng-deep .leaflet-tooltip.label-manzano::before { display: none !important; }

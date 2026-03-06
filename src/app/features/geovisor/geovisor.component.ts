@@ -165,6 +165,22 @@ export class GeovisorComponent implements OnInit {
             }
           });
         }
+
+        const mostrarManzanosFijos = nivelZoom >= 15;
+        if (this.capaManzanos) {
+          this.capaManzanos.eachLayer((layer: any) => {
+            const tooltip = layer.getTooltip();
+            if (tooltip) {
+              if (mostrarManzanosFijos) {
+                tooltip.options.permanent = true;
+                layer.openTooltip();
+              } else {
+                tooltip.options.permanent = false;
+                layer.closeTooltip();
+              }
+            }
+          });
+        }
       });
 
       L.control.scale({
@@ -821,10 +837,28 @@ export class GeovisorComponent implements OnInit {
     if (this.layerControl) this.layerControl.addOverlay(this.capaPredios, "⚫ Predios");
   }
 
+  // private dibujarManzanos(geoJsonData: any): void {
+  //   this.capaManzanos = L.geoJSON(geoJsonData, {
+  //     pane: 'manzanosPane',
+  //     style: { color: '#ffffff', weight: 1.5, fillColor: '#9e9e9e', fillOpacity: 0.9, dashArray: '' }
+  //   });
+  //   if (this.layerControl) this.layerControl.addOverlay(this.capaManzanos, "⬜ Manzanos");
+  // }
+
   private dibujarManzanos(geoJsonData: any): void {
+    const zoomInicial = this.map.getZoom();
     this.capaManzanos = L.geoJSON(geoJsonData, {
       pane: 'manzanosPane',
-      style: { color: '#ffffff', weight: 1.5, fillColor: '#9e9e9e', fillOpacity: 0.9, dashArray: '' }
+      style: { color: '#ffffff', weight: 1.5, fillColor: '#9e9e9e', fillOpacity: 0.9, dashArray: '' },
+      onEachFeature: (feature, layer) => {
+        if (feature.properties.orden_manz) {
+          layer.bindTooltip(feature.properties.orden_manz.toString(), {
+            permanent: zoomInicial >= 15,
+            direction: 'center',
+            className: 'label-manzano'
+          });
+        }
+      }
     });
     if (this.layerControl) this.layerControl.addOverlay(this.capaManzanos, "⬜ Manzanos");
   }
