@@ -1,0 +1,286 @@
+<div class="admin-layout">
+  <header class="navbar-ine">
+    <div class="brand">
+      <img ngSrc="logo-ine.png" alt="INE" width="99" height="50" priority class="logo-ine">
+      <div class="separator"></div>
+      <h2>Administración de Usuarios</h2>
+    </div>
+    <div class="user-controls">
+      <button class="custom-btn btn-outline-white" (click)="volverAlMapa()">
+        <i class="bi bi-arrow-left-circle"></i> Volver al Mapa
+      </button>
+    </div>
+  </header>
+
+  <div class="admin-container">
+
+    <div class="custom-card mb-20">
+      <div class="custom-card-header bg-blue">
+        <span><i class="bi bi-person-plus-fill"></i> Agregar desde Active Directory</span>
+      </div>
+      <div class="custom-card-body">
+
+        <div class="search-box">
+          <input type="text" class="custom-input" placeholder="Buscar por nombre, apellido o usuario..."
+                 [(ngModel)]="terminoBusqueda" (keyup.enter)="buscarEnAD()">
+          <button class="custom-btn btn-blue" (click)="buscarEnAD()" [disabled]="isSearching()">
+            @if(isSearching()) { <span class="spinner-small"></span> }
+            @else { <i class="bi bi-search"></i> Buscar }
+          </button>
+        </div>
+
+        @if(resultadosAD().length > 0) {
+          <div class="table-responsive mt-15">
+            <table class="custom-table">
+              <thead>
+              <tr>
+                <th>Nombre Completo</th>
+                <th>Usuario</th>
+                <th>Correo</th>
+                <th>Asignar Rol</th>
+                <th>Acción</th>
+              </tr>
+              </thead>
+              <tbody>
+                @for(user of paginatedAD(); track user.username) {
+                  <tr>
+                    <td>{{ user.nombre_completo }}</td>
+                    <td><strong>{{ user.username }}</strong></td>
+                    <td>
+                      @if(user.email && user.email.trim() !== '') { {{ user.email }} }
+                      @else { <span class="text-muted italic"><i class="bi bi-envelope-x"></i> No registrado</span> }
+                    </td>
+                    <td style="width: 160px;">
+                      <select class="custom-select" [(ngModel)]="user.selectedRole">
+                        @for(rol of roles(); track rol.id) {
+                          <option [value]="rol.id">{{ rol.nombre | uppercase }}</option>
+                        }
+                      </select>
+                    </td>
+
+                    <td style="width: 120px;">
+                      <button class="custom-btn btn-green w-100" (click)="prepararAgregarUsuario(user)" [disabled]="user.isSaving">
+                        @if(user.isSaving) { <i class="bi bi-hourglass-split"></i> }
+                        @else { <i class="bi bi-check-circle"></i> Agregar }
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="custom-pagination">
+            <button class="custom-btn btn-outline" (click)="prevPageAD()" [disabled]="pageAD() === 1">Anterior</button>
+            <span class="page-info">Página <strong>{{ pageAD() }}</strong> de {{ totalPagesAD() }}</span>
+            <button class="custom-btn btn-outline" (click)="nextPageAD()" [disabled]="pageAD() === totalPagesAD()">Siguiente</button>
+          </div>
+        }
+        @else if(busquedaRealizada() && !isSearching()) {
+          <div class="empty-state text-center mt-15" style="padding: 40px 20px; border: 1px dashed #ced4da; border-radius: 8px; background-color: #f8f9fa;">
+            <i class="bi bi-person-x" style="font-size: 2.5rem; color: #adb5bd; display: block; margin-bottom: 10px;"></i>
+            <p class="m-0 text-muted" style="font-size: 1.05rem;">
+              No se encontró ningún usuario coincidente con "<strong>{{ terminoBusqueda() }}</strong>" en el Active Directory.
+            </p>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="align-right mb-20">
+      <button class="custom-btn btn-yellow shadow" (click)="abrirModalAdmin()">
+        <i class="bi bi-person-plus-fill"></i> Crear Usuario Local
+      </button>
+    </div>
+
+    @if(showAdminModal()) {
+      <div class="custom-modal-overlay">
+        <div class="custom-modal shadow-lg">
+          <div class="modal-header bg-yellow">
+            <h5 class="m-0"><i class="bi bi-shield-lock-fill"></i> Nuevo Usuario Local</h5>
+            <button class="close-btn" (click)="cerrarModalAdmin()">&times;</button>
+          </div>
+
+          <div class="modal-body">
+            <div class="form-grid">
+
+              <div class="form-group">
+                <label>Usuario *</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-person icon"></i>
+                  <input type="text" class="custom-input with-icon" [(ngModel)]="nuevoAdmin().username" placeholder="Ej: wvillca_admin">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Correo (Opcional)</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-envelope icon"></i>
+                  <input type="email" class="custom-input with-icon" [(ngModel)]="nuevoAdmin().email" placeholder="correo@ine.gob.bo">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Rol de Acceso *</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-tags icon"></i>
+                  <select class="custom-select with-icon" [(ngModel)]="nuevoAdmin().rol_id">
+                    @for(rol of roles(); track rol.id) {
+                      <option [value]="rol.id">{{ rol.nombre | uppercase }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Contraseña *</label>
+                <div class="input-icon-wrapper">
+                  <i class="bi bi-key icon"></i>
+                  <input [type]="mostrarPasswordLocal() ? 'text' : 'password'" class="custom-input with-icon" [(ngModel)]="nuevoAdmin().password" placeholder="******">
+                  <button class="toggle-pass-btn" (click)="togglePasswordLocal()">
+                    <i class="bi" [class.bi-eye]="!mostrarPasswordLocal()" [class.bi-eye-slash]="mostrarPasswordLocal()"></i>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="custom-btn btn-outline" (click)="cerrarModalAdmin()">Cancelar</button>
+            <button class="custom-btn btn-yellow" (click)="prepararGuardarLocal()" [disabled]="isSavingAdmin()">
+              @if(isSavingAdmin()) { <span class="spinner-small black"></span> Guardando... }
+              @else { <i class="bi bi-save"></i> Guardar Usuario }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="custom-card mb-20 shadow">
+
+      <div class="custom-card-header bg-dark d-flex-between">
+        <span><i class="bi bi-people-fill"></i> Usuarios con acceso al Geovisor ({{ usuariosLocalesFiltrados().length }})</span>
+        <div class="search-box-small">
+          <i class="bi bi-search icon"></i>
+          <input type="text" class="custom-input input-dark" placeholder="Buscar usuario, correo o rol..."
+                 [(ngModel)]="filtroLocal" (ngModelChange)="onFiltroLocalChange()">
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table class="custom-table table-hover">
+          <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Correo</th>
+            <th>Origen</th>
+            <th>Rol Actual</th>
+            <th>Estado</th>
+            <th>Creación</th>
+          </tr>
+          </thead>
+          <tbody>
+            @for(local of paginatedLocal(); track local.id) {
+              <tr>
+                <td><strong>{{ local.username }}</strong></td>
+                <td>
+                  @if(local.email && local.email.trim() !== '') { {{ local.email }} }
+                  @else { <span class="text-muted italic small">No registrado</span> }
+                </td>
+                <td>
+                  <span class="custom-badge" [ngClass]="local.origen_auth === 'AD' ? 'badge-info' : 'badge-yellow'">
+                    {{ local.origen_auth }}
+                  </span>
+                </td>
+                <td><span class="custom-badge badge-gray">{{ local.rol_nombre | uppercase }}</span></td>
+                <td>
+                  <button class="custom-btn w-100"
+                          [ngClass]="local.activo ? 'btn-outline-red' : 'btn-outline-green'"
+                          (click)="prepararCambioEstado(local)"
+                          style="padding: 4px 8px; font-size: 0.8rem;">
+                    @if(local.activo) {
+                      <i class="bi bi-x-circle"></i> Desactivar
+                    } @else {
+                      <i class="bi bi-check-circle"></i> Activar
+                    }
+                  </button>
+                </td>
+                <td class="small">{{ local.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+              </tr>
+            }
+            @if(usuariosLocalesFiltrados().length === 0) {
+              <tr><td colspan="6" class="text-center empty-state">No se encontraron usuarios.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if(usuariosLocalesFiltrados().length > pageSizeLocal()) {
+        <div class="custom-card-footer">
+          <div class="custom-pagination">
+            <button class="custom-btn btn-outline" (click)="prevPageLocal()" [disabled]="pageLocal() === 1">Anterior</button>
+            <span class="page-info">Página <strong>{{ pageLocal() }}</strong> de {{ totalPagesLocal() }}</span>
+            <button class="custom-btn btn-outline" (click)="nextPageLocal()" [disabled]="pageLocal() === totalPagesLocal()">Siguiente</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    @if(showConfirmModal()) {
+      <div class="custom-modal-overlay" style="z-index: 3000;">
+        <div class="custom-modal modal-sm shadow-lg">
+          <div class="modal-header bg-blue">
+            <h5 class="m-0 text-white"><i class="bi bi-question-circle-fill"></i> Confirmar Acción</h5>
+            <button class="close-btn text-white" (click)="cerrarConfirmModal()">&times;</button>
+          </div>
+
+          <div class="modal-body text-center" style="padding: 30px 20px;">
+
+            <i class="bi text-blue"
+               [ngClass]="tipoConfirmacion() === 'ESTADO' ? 'bi-power' : 'bi-person-check'"
+               style="font-size: 3rem; opacity: 0.8;"></i>
+
+            <p class="mt-15 mb-0" style="font-size: 1.1rem; color: #444;">
+
+              @if(tipoConfirmacion() === 'AD') {
+                ¿Estás seguro de importar a <br>
+                <strong style="color: #1976D2; font-size: 1.2rem;">{{ usuarioSeleccionadoAD()?.nombre_completo || usuarioSeleccionadoAD()?.username }}</strong> <br> al Geovisor?
+              }
+
+              @else if(tipoConfirmacion() === 'LOCAL') {
+                ¿Confirmas la creación del usuario local <br>
+                <strong style="color: #1976D2; font-size: 1.2rem;">{{ nuevoAdmin().username }}</strong>?
+              }
+
+              @else {
+                ¿Estás seguro de <strong>{{ usuarioSeleccionadoAD()?.activo ? 'DESACTIVAR' : 'ACTIVAR' }}</strong> <br>
+                al usuario <strong style="color: #1976D2; font-size: 1.2rem;">{{ usuarioSeleccionadoAD()?.username }}</strong>?<br>
+
+                @if(usuarioSeleccionadoAD()?.activo) {
+                  <span style="display: block; margin-top: 10px; font-size: 0.9rem; color: #dc3545;">
+                    <i class="bi bi-exclamation-triangle"></i> Perderá el acceso inmediato al sistema.
+                  </span>
+                }
+
+                @if(!usuarioSeleccionadoAD()?.activo) {
+                  <span style="display: block; margin-top: 10px; font-size: 0.9rem; color: #28a745;">
+                    <i class="bi bi-info-circle"></i> Podrá volver a iniciar sesión.
+                  </span>
+                }
+              }
+            </p>
+          </div>
+
+          <div class="modal-footer" style="justify-content: center; background-color: #f8f9fa;">
+            <button class="custom-btn btn-outline" (click)="cerrarConfirmModal()">Cancelar</button>
+            <button class="custom-btn btn-blue" (click)="confirmarAccion()">
+              <i class="bi bi-check2"></i> Sí, Confirmar
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+
+  </div>
+</div>

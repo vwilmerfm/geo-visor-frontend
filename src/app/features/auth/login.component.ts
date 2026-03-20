@@ -33,13 +33,19 @@ export class LoginComponent {
     this.errorMessage.set('');
 
     this.authService.login(this.loginForm.value).subscribe({
-      next: () => {
+      next: (res) => {
         this.isLoading.set(false);
-        this.router.navigate(['/mapa']);
+
+        const user = res.user;
+
+        if (user && user.role && user.role.toLowerCase().includes('admin')) {
+          this.router.navigate(['/admin-usuarios']);
+        } else {
+          this.router.navigate(['/mapa']);
+        }
       },
       error: (err) => {
         this.isLoading.set(false);
-
         this.errorMessage.set(err.error?.error || 'Usuario o contraseña incorrectos.');
       }
     });

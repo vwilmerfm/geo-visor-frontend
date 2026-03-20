@@ -3,7 +3,8 @@ import { LoginComponent } from './features/auth/login.component';
 import { authGuard } from './core/guards/auth.guard';
 import { GeovisorComponent } from './features/geovisor/geovisor.component';
 import { guestGuard } from './core/guards/guest.guard';
-import {GeoEjemploComponent} from './features/geo-ejemplo/geo-ejemplo.component';
+import {adminGuard} from './core/guards/admin.guard';
+import {AdminUsuariosComponent} from './features/admin-usuarios/admin-usuarios.component';
 
 export const routes: Routes = [
   {
@@ -17,9 +18,9 @@ export const routes: Routes = [
     canActivate: [authGuard]
   },
   {
-    path: 'geo-ejemplo',
-    component: GeoEjemploComponent,
-    canActivate: [authGuard]
+    path: 'admin-usuarios',
+    component: AdminUsuariosComponent,
+    canActivate: [authGuard, adminGuard]
   },
   { path: '', redirectTo: '/login', pathMatch: 'full' },
   { path: '**', redirectTo: '/login' }

@@ -72,4 +72,12 @@ export class GeovisorService {
       responseType: 'blob'
     });
   }
+
+  getSuperAreaMunicipio(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/superarea-municipio/${id}`);
+  }
+
+  getAreaTrabajoMunicipio(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/areatrabajo-municipio/${id}`);
+  }
 }

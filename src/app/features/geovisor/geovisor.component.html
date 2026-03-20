@@ -13,6 +13,14 @@
     </div>
 
     <div class="user-controls desktop-only">
+
+      @if (currentUser()?.role?.toLowerCase()?.includes('admin')) {
+        <button class="btn-admin" (click)="irAAdminPanel()" title="Panel de Administración">
+          <i class="bi bi-gear-fill"></i> Panel Admin
+        </button>
+        <div class="vertical-divider"></div>
+      }
+
       <i class="bi bi-geo-alt-fill nav-icon" (click)="resetMapa()" title="Vista General"></i>
       <div class="vertical-divider"></div>
 
@@ -84,16 +92,6 @@
               class="custom-ng-select">
             </ng-select>
           </div>
-
-          <!-- POR SI ACASO
-          <div class="toggle-container animated-fade">
-            <label class="toggle-switch">
-              <input type="checkbox" [ngModel]="verComunidades()" (ngModelChange)="toggleComunidades($event)">
-              <span class="slider round"></span>
-            </label>
-            <span class="toggle-label">Mostrar comunidades</span>
-          </div>
-          -->
         }
 
         @if (datosPanel(); as panel) {
@@ -137,42 +135,19 @@
           <div class="panel-body-bordered ref-body-grid">
             <div class="ref-item"><span class="color-box border-purple"></span> Límite departamental</div>
             <div class="ref-item"><span class="color-box border-dashed"></span> Límite municipal</div>
-            <div class="ref-item"><span class="color-box circle"></span> Comunidad/Hacienda</div>
+            <div class="ref-item"><span class="color-box border-superarea"></span> Súper Área Censal</div>
+            <div class="ref-item"><span class="color-box border-pink"></span> Área Censal</div>
+            <div class="ref-item"><span class="color-box border-blue"></span> Sector</div>
+            <div class="ref-item"><span class="color-box border-areatrabajo"></span> Áreas de Trabajo</div>
             <div class="ref-item"><span class="color-box icon-apa"></span> APA's</div>
-            <div class="ref-item"><span class="color-box border-green"></span> Área Censal</div>
-            <div class="ref-item"><span class="color-box border-blue"></span> Sectores</div>
-            <div class="ref-item"><span class="color-box dot-red"></span> UPA's - Amanzanado</div>
+            <div class="ref-item"><span class="color-box circle"></span> Centros Poblados</div>
             <div class="ref-item"><span class="color-box poly-gray"></span> Manzanos</div>
             <div class="ref-item"><span class="color-box dot-black"></span> Predios</div>
-            <!--
-            <div class="ref-item"><span class="color-box border-red"></span> Periurbano</div>
-            -->
+            <div class="ref-item"><span class="color-box dot-red"></span> UPA's - Amanzanado</div>
           </div>
         </div>
 
-        <!--
         @if (datosPanel()) {
-          <button class="btn-excel-block" (click)="descargarReporte()" [disabled]="isDownloading()">
-            @if (isDownloading()) {
-              <span class="spinner-small"></span> Descargando...
-            } @else {
-              <i class="bi bi-file-earmark-excel-fill"></i> Descargar Datos (Excel)
-            }
-          </button>
-
-          @if (datosPanel().nivelPanel === 'municipal') {
-            <button class="btn-excel-block btn-excel-sectores" (click)="descargarReporteSectoresMunicipal()" [disabled]="isDownloadingSectores()">
-              @if (isDownloadingSectores()) {
-                <span class="spinner-small"></span> Descargando Sectores...
-              } @else {
-                <i class="bi bi-file-earmark-spreadsheet-fill"></i> Descargar Sectores (Excel)
-              }
-            </button>
-          }
-        }
-        -->
-        @if (datosPanel()) {
-
           @if (datosPanel().nivelPanel === 'municipal') {
             <button class="btn-excel-block btn-excel-sectores" (click)="descargarReporteSectoresMunicipal()" [disabled]="isDownloadingSectores()">
               @if (isDownloadingSectores()) {
