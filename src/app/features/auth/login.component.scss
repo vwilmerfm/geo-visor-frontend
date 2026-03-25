@@ -41,8 +41,15 @@
   text-align: center;
   margin-bottom: 30px;
 
+  .logo-censo {
+    width: 100%;
+    max-width: 260px;
+    height: auto;
+    margin-bottom: 12px;
+  }
+
   h2 {
-    color: #1976D2;
+    color: #2E7D32;
     margin: 0 0 5px 0;
     font-size: 24px;
     font-weight: 700;
@@ -90,10 +97,10 @@
     transition: all 0.3s;
 
     &:focus {
-      border-color: #1976D2;
+      border-color: #2E7D32;
       box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
       outline: none;
-      + .input-icon { color: #1976D2; }
+      + .input-icon { color: #2E7D32; }
     }
 
     &.is-invalid {
@@ -132,7 +139,7 @@
 .btn-submit {
   width: 100%;
   padding: 12px;
-  background-color: #1976D2;
+  background-color: #2E7D32;
   color: white;
   border: none;
   border-radius: 6px;
@@ -146,13 +153,13 @@
   gap: 10px;
 
   &:hover:not(:disabled) {
-    background-color: #1565C0;
+    background-color: #1B5E20;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(21, 101, 192, 0.3);
   }
 
   &:disabled {
-    background-color: #90CAF9;
+    background-color: #1B5E20;
     cursor: not-allowed;
   }
 }

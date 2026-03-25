@@ -22,6 +22,8 @@ export class AdminUsuariosComponent implements OnInit {
   isSearching = signal(false);
   filtroLocal = signal('');
 
+  usuarioActual = signal<any>(null);
+
   usuariosLocalesFiltrados = computed(() => {
     const termino = this.filtroLocal().toLowerCase();
 
@@ -63,6 +65,12 @@ export class AdminUsuariosComponent implements OnInit {
   busquedaRealizada = signal(false);
 
   ngOnInit(): void {
+    const userStr = localStorage.getItem('user');
+
+    if (userStr) {
+      this.usuarioActual.set(JSON.parse(userStr));
+    }
+
     this.cargarRoles();
     this.cargarUsuariosLocales();
   }
@@ -249,5 +257,12 @@ export class AdminUsuariosComponent implements OnInit {
         alert(err.error?.error || 'Error al actualizar el estado del usuario.');
       }
     });
+  }
+
+  cerrarSesion(): void {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+
+    this.router.navigate(['/login']);
   }
 }

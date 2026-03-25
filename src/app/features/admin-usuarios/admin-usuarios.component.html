@@ -5,9 +5,15 @@
       <div class="separator"></div>
       <h2>Administración de Usuarios</h2>
     </div>
-    <div class="user-controls">
+    <div class="user-controls" style="display: flex; gap: 15px; align-items: center;">
       <button class="custom-btn btn-outline-white" (click)="volverAlMapa()">
         <i class="bi bi-arrow-left-circle"></i> Volver al Mapa
+      </button>
+
+      <div style="width: 1px; height: 30px; background-color: rgba(255, 255, 255, 0.3);"></div>
+
+      <button class="custom-btn btn-outline-warning" (click)="cerrarSesion()">
+        <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
       </button>
     </div>
   </header>
@@ -16,7 +22,7 @@
 
     <div class="custom-card mb-20">
       <div class="custom-card-header bg-blue">
-        <span><i class="bi bi-person-plus-fill"></i> Agregar desde Active Directory</span>
+        <span><i class="bi bi-person-plus-fill"></i> Agregar desde el AD <b>Active Directory</b></span>
       </div>
       <div class="custom-card-body">
 
@@ -160,7 +166,7 @@
     <div class="custom-card mb-20 shadow">
 
       <div class="custom-card-header bg-dark d-flex-between">
-        <span><i class="bi bi-people-fill"></i> Usuarios con acceso al Geovisor ({{ usuariosLocalesFiltrados().length }})</span>
+        <span><i class="bi bi-people-fill"></i> Usuarios con acceso al Sistema Geovisor ({{ usuariosLocalesFiltrados().length }})</span>
         <div class="search-box-small">
           <i class="bi bi-search icon"></i>
           <input type="text" class="custom-input input-dark" placeholder="Buscar usuario, correo o rol..."
@@ -195,16 +201,26 @@
                 </td>
                 <td><span class="custom-badge badge-gray">{{ local.rol_nombre | uppercase }}</span></td>
                 <td>
-                  <button class="custom-btn w-100"
-                          [ngClass]="local.activo ? 'btn-outline-red' : 'btn-outline-green'"
-                          (click)="prepararCambioEstado(local)"
-                          style="padding: 4px 8px; font-size: 0.8rem;">
-                    @if(local.activo) {
-                      <i class="bi bi-x-circle"></i> Desactivar
-                    } @else {
-                      <i class="bi bi-check-circle"></i> Activar
-                    }
-                  </button>
+                  @if(usuarioActual()?.username === local.username) {
+
+                    <span class="custom-badge badge-gray w-100" style="display: flex; justify-content: center; opacity: 0.8; padding: 6px;">
+                      <i class="bi bi-shield-lock-fill text-muted"></i> Sesión Actual
+                    </span>
+
+                  } @else {
+
+                    <button class="custom-btn w-100"
+                            [ngClass]="local.activo ? 'btn-outline-red' : 'btn-outline-green'"
+                            (click)="prepararCambioEstado(local)"
+                            style="padding: 4px 8px; font-size: 0.8rem;">
+                      @if(local.activo) {
+                        <i class="bi bi-x-circle"></i> Desactivar
+                      } @else {
+                        <i class="bi bi-check-circle"></i> Activar
+                      }
+                    </button>
+
+                  }
                 </td>
                 <td class="small">{{ local.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
               </tr>
