@@ -415,11 +415,18 @@ export class GeovisorComponent implements OnInit {
     });
 
     this.geoService.getSuperAreaMunicipio(+id).subscribe({
-      next: (data) => this.dibujarSuperArea(data)
+      next: (data) => {
+        if (data && data.features)
+          this.dibujarSuperArea(data);
+      },
+      error: (err) => console.error('Error cargando Súper Área Censal:', err)
     });
 
     this.geoService.getAreaTrabajoMunicipio(+id).subscribe({
-      next: (data) => this.dibujarAreaTrabajo(data)
+      next: (data) => {
+        if (data && data.features) this.dibujarAreaTrabajo(data);
+      },
+      error: (err) => console.error('Error cargando Áreas de Trabajo:', err)
     });
   }
 
