@@ -3,6 +3,7 @@ import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UsuarioService } from '../../core/services/usuario.service';
+import {AuthService} from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-usuarios',
@@ -14,6 +15,7 @@ import { UsuarioService } from '../../core/services/usuario.service';
 export class AdminUsuariosComponent implements OnInit {
   private usuarioService = inject(UsuarioService);
   private router = inject(Router);
+  private authService = inject(AuthService);
 
   usuariosLocales = signal<any[]>([]);
   roles = signal<any[]>([]);
@@ -259,10 +261,7 @@ export class AdminUsuariosComponent implements OnInit {
     });
   }
 
-  cerrarSesion(): void {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-
-    this.router.navigate(['/login']);
+  cerrarSesion() {
+    this.authService.logout();
   }
 }

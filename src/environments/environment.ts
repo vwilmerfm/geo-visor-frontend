@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://geovisor.ine.gob.bo/api'
+  apiUrl: 'http://10.10.10.78/api'
 };
