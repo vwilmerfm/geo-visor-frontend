@@ -116,7 +116,8 @@ export class GeovisorComponent implements OnInit {
         "Comunidad",
         "Predios",
         "Manzanos",
-        "APA"
+        "APA",
+        // "Predios"
       ];
 
       this.layerControl = L.control.layers(baseMaps, undefined, {
@@ -404,7 +405,14 @@ export class GeovisorComponent implements OnInit {
           error: (err) => console.error(err)
         });
 
-        this.geoService.getPrediosMunicipio(+id).subscribe({ next: (d) => this.dibujarPredios(d) });
+        // this.geoService.getPrediosMunicipio(+id).subscribe({ next: (d) => this.dibujarPredios(d) });
+        this.geoService.getPrediosMunicipio(+id).subscribe({
+          next: (d) => {
+            if (d && d.features)
+              this.dibujarPredios(d);
+          },
+          error: (err) => console.error('Error en cargar predios:', err)
+        });
         this.geoService.getAreaCensalMunicipio(+id).subscribe({ next: (d) => this.dibujarAreaCensal(d) });
         this.geoService.getManzanosMunicipio(+id).subscribe({ next: (d) => this.dibujarManzanos(d) });
       },
@@ -864,13 +872,27 @@ export class GeovisorComponent implements OnInit {
   }
 
   private dibujarPredios(geoJsonData: any): void {
+    if (this.capaPredios) {
+      if (this.layerControl)
+        this.layerControl.removeLayer(this.capaPredios);
+
+      this.map.removeLayer(this.capaPredios);
+    }
+
     this.capaPredios = L.geoJSON(geoJsonData, {
-      pane: 'markerPane', filter: (f) => f.geometry.type === 'Point',
-      pointToLayer: (feature, latlng) => L.circleMarker(latlng, { radius: 2.5, color: '#212121', fillColor: '#212121', fillOpacity: 1 })
+      pane: 'markerPane',
+      filter: (f) => f.geometry && f.geometry.type === 'Point',
+      pointToLayer: (feature, latlng) => L.circleMarker(latlng, {
+        radius: 2.5,
+        color: '#212121',
+        fillColor: '#212121',
+        fillOpacity: 1
+      })
     });
 
-    if (this.layerControl)
+    if (this.layerControl) {
       this.layerControl.addOverlay(this.capaPredios, "⚫ Predios");
+    }
   }
 
   private dibujarAreaCensal(geoJsonData: any): void {
